@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+# prefontaine-setup: a five-question palate quiz that writes ~/.claude/prefontaine/config.json.
+#
+#   prefontaine-setup              interactive (gum if installed, plain prompts otherwise)
+#   prefontaine-setup --defaults   no questions, balanced defaults
+#   prefontaine-setup --dry-run    print the profile card, write nothing
+#   prefontaine-setup --no-gum     force the plain prompts
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROFILE_JS="$ROOT/lib/profile.js"
+
+DEFAULTS=0
+DRY_RUN=0
+USE_GUM=1
+for arg in "$@"; do
+  case "$arg" in
+    --defaults) DEFAULTS=1 ;;
+    --dry-run) DRY_RUN=1 ;;
+    --no-gum) USE_GUM=0 ;;
+    -h | --help)
+      sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      echo "unknown flag: $arg (try --help)" >&2
+      exit 2
+      ;;
+  esac
+done
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "prefontaine needs node on PATH (the Stop hook runs on it)." >&2
+  exit 1
+fi
+
+if [[ $USE_GUM -eq 1 ]] && ! command -v gum >/dev/null 2>&1; then
+  USE_GUM=0
+  echo "(Tip: brew install gum for the fancy version. Plain prompts it is.)"
+  echo
+fi
+# gum needs a terminal; without one, fall back rather than hang.
+if [[ $USE_GUM -eq 1 && ! -t 0 && $DEFAULTS -eq 0 ]]; then USE_GUM=0; fi
+
+PINK=212
+GOLD=220
+
+DOOR_PUSH="a git push to a shared branch, or a merge"
+DOOR_SEND="any external send: chat, email, ticketing, docs, any API that publishes"
+DOOR_DELETE="deleting data you have not read"
+DOOR_MONEY="spending money"
+DOOR_CREDS="changing a credential or permission"
+
+header() {
+  if [[ $USE_GUM -eq 1 ]]; then
+    gum style --border double --border-foreground "$PINK" --padding "1 3" --margin "1 0" --align center \
+      "$(gum style --bold --foreground "$PINK" 'PREFONTAINE')" \
+      'The palate quiz for your agent' \
+      "$(gum style --faint 'Five questions. No wrong answers. Some bold ones.')"
+  else
+    echo "=============================================="
+    echo "  PREFONTAINE: the palate quiz for your agent"
+    echo "  Five questions. No wrong answers."
+    echo "=============================================="
+    echo
+  fi
+}
+
+ask_heading() {
+  if [[ $USE_GUM -eq 1 ]]; then
+    gum style --bold --foreground "$GOLD" "$1"
+  else
+    echo "$1"
+  fi
+}
+
+# plain_choose "<default index>" option...  -> prints the chosen option
+plain_choose() {
+  local def="$1"
+  shift
+  local i=1 opt
+  for opt in "$@"; do
+    echo "  $i) $opt" >&2
+    i=$((i + 1))
+  done
+  local reply
+  read -r -p "  Pick one [$def]: " reply || reply=""
+  reply="${reply:-$def}"
+  if [[ "$reply" =~ ^[0-9]+$ ]] && ((reply >= 1 && reply <= $#)); then
+    echo "${!reply}"
+  else
+    local d="$def"
+    echo "${!d}"
+  fi
+}
+
+# plain_multi option...  -> prints chosen options, one per line (empty input = all)
+plain_multi() {
+  local i=1 opt
+  for opt in "$@"; do
+    echo "  $i) $opt" >&2
+    i=$((i + 1))
+  done
+  local reply
+  read -r -p "  Pick any, space-separated [all]: " reply || reply=""
+  if [[ -z "$reply" ]]; then
+    printf '%s\n' "$@"
+    return
+  fi
+  local n
+  for n in $reply; do
+    if [[ "$n" =~ ^[0-9]+$ ]] && ((n >= 1 && n <= $#)); then echo "${!n}"; fi
+  done
+}
+
+choose() { # choose <default label> option...
+  local def="$1"
+  shift
+  if [[ $USE_GUM -eq 1 ]]; then
+    gum choose --cursor.foreground "$PINK" --selected "$def" "$@"
+  else
+    local idx=1 i=1 opt
+    for opt in "$@"; do
+      [[ "$opt" == "$def" ]] && idx=$i
+      i=$((i + 1))
+    done
+    plain_choose "$idx" "$@"
+  fi
+}
+
+choose_many() {
+  if [[ $USE_GUM -eq 1 ]]; then
+    # Labels contain commas, so preselect with "*" rather than a comma list.
+    gum choose --no-limit --cursor.foreground "$PINK" --selected '*' "$@"
+  else
+    plain_multi "$@"
+  fi
+}
+
+input() { # input <placeholder> <default>
+  if [[ $USE_GUM -eq 1 ]]; then
+    gum input --placeholder "$1" --value "$2"
+  else
+    local reply
+    read -r -p "  [$2]: " reply || reply=""
+    echo "${reply:-$2}"
+  fi
+}
+
+confirm() {
+  if [[ $USE_GUM -eq 1 ]]; then
+    gum confirm --prompt.foreground "$PINK" "$1"
+  else
+    local reply
+    read -r -p "$1 [Y/n]: " reply || reply=""
+    [[ -z "$reply" || "$reply" =~ ^[Yy] ]]
+  fi
+}
+
+AUTONOMY="balanced"
+WHEN_IDLE="self_review"
+NOTES_DIR="repo"
+NAME=""
+BACKLOG=""
+DOORS="$(printf '%s\n' "$DOOR_PUSH" "$DOOR_SEND" "$DOOR_DELETE" "$DOOR_MONEY" "$DOOR_CREDS")"
+
+if [[ $DEFAULTS -eq 0 ]]; then
+  header
+
+  ask_heading "1/5  How bold do you like your agent?"
+  B_WHITE="Crisp Sauvignon Blanc: asks before it wanders"
+  B_PINOT="Pinot Noir: picks a lane, logs why"
+  B_CAB="Bold Cabernet: does not wait to be poured"
+  case "$(choose "$B_PINOT" "$B_WHITE" "$B_PINOT" "$B_CAB")" in
+    "$B_WHITE") AUTONOMY="cautious" ;;
+    "$B_CAB") AUTONOMY="full_send" ;;
+    *) AUTONOMY="balanced" ;;
+  esac
+  echo
+
+  ask_heading "2/5  Which doors always need a knock?"
+  DOORS="$(choose_many "$DOOR_PUSH" "$DOOR_SEND" "$DOOR_DELETE" "$DOOR_MONEY" "$DOOR_CREDS")"
+  echo
+
+  ask_heading "3/5  When I finish early, I should..."
+  I_SELF="Swirl my own glass: one self-review pass"
+  I_BACK="Open the next bottle: pull from a backlog"
+  I_STOP="Cork it: stop and wait"
+  case "$(choose "$I_SELF" "$I_SELF" "$I_BACK" "$I_STOP")" in
+    "$I_BACK") WHEN_IDLE="backlog" ;;
+    "$I_STOP") WHEN_IDLE="stop" ;;
+    *) WHEN_IDLE="self_review" ;;
+  esac
+  if [[ "$WHEN_IDLE" == "backlog" ]]; then
+    ask_heading "     Which bottle? (a Markdown checklist of '- [ ]' items)"
+    BACKLOG="$(input "path to backlog file" "~/.claude/prefontaine/backlog.md")"
+  fi
+  echo
+
+  ask_heading "4/5  Where should I cellar my notes?"
+  N_REPO="In the repo: .prefontaine/forks.md (git-excluded)"
+  N_HOME="In my home dir: ~/.claude/prefontaine/<project>/"
+  N_CUSTOM="Somewhere else..."
+  case "$(choose "$N_REPO" "$N_REPO" "$N_HOME" "$N_CUSTOM")" in
+    "$N_HOME") NOTES_DIR="home" ;;
+    "$N_CUSTOM") NOTES_DIR="$(input "directory for notes" "~/prefontaine-notes")" ;;
+    *) NOTES_DIR="repo" ;;
+  esac
+  echo
+
+  ask_heading "5/5  What should I call you?"
+  NAME="$(input "your name" "$(git config user.name 2>/dev/null || echo 'the user')")"
+  echo
+fi
+
+ANSWERS="$(
+  P_NAME="$NAME" P_AUTONOMY="$AUTONOMY" P_IDLE="$WHEN_IDLE" P_NOTES="$NOTES_DIR" \
+    P_BACKLOG="$BACKLOG" P_DOORS="$DOORS" P_DEFAULTS="$DEFAULTS" node -e '
+    const e = process.env
+    if (e.P_DEFAULTS === "1") { process.stdout.write("{}"); process.exit(0) }
+    const doors = (e.P_DOORS || "").split("\n").map((s) => s.trim()).filter(Boolean)
+    const a = { name: e.P_NAME, autonomy: e.P_AUTONOMY, when_idle: e.P_IDLE, notes_dir: e.P_NOTES }
+    if (doors.length) a.one_way_doors = doors
+    if (e.P_BACKLOG) a.backlog_file = e.P_BACKLOG
+    process.stdout.write(JSON.stringify(a))
+  '
+)"
+
+WRITE_ARGS=(write)
+[[ $DRY_RUN -eq 1 ]] && WRITE_ARGS+=(--dry-run)
+
+if [[ $DRY_RUN -eq 0 && $DEFAULTS -eq 0 ]]; then
+  confirm "Bottle this profile?" || {
+    echo "Nothing written. Come back when you are thirsty."
+    exit 0
+  }
+fi
+
+if [[ $USE_GUM -eq 1 && -t 1 ]]; then
+  CARD="$(gum spin --spinner dot --title "Decanting your profile..." --show-output -- \
+    bash -c 'printf "%s" "$1" | node "$2" "${@:3}"' _ "$ANSWERS" "$PROFILE_JS" "${WRITE_ARGS[@]}")"
+else
+  CARD="$(printf '%s' "$ANSWERS" | node "$PROFILE_JS" "${WRITE_ARGS[@]}")"
+fi
+
+if [[ $USE_GUM -eq 1 ]]; then
+  gum style --border rounded --border-foreground "$GOLD" --padding "1 2" --margin "1 0" "$CARD"
+else
+  echo "----------------------------------------------"
+  echo "$CARD"
+  echo "----------------------------------------------"
+fi
+
+if [[ $DRY_RUN -eq 1 ]]; then
+  echo "Dry run: nothing written."
+else
+  echo "Saved to ~/.claude/prefontaine/config.json. Start the loop with /prefontaine:prefontaine."
+  if [[ "$WHEN_IDLE" == "backlog" && -n "$BACKLOG" ]]; then
+    BL="${BACKLOG/#\~/$HOME}"
+    if [[ ! -e "$BL" ]]; then
+      mkdir -p "$(dirname "$BL")" && printf '# Backlog\n' >"$BL"
+      echo "Created an empty backlog at $BACKLOG."
+    fi
+  fi
+fi

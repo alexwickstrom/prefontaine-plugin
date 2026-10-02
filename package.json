@@ -1,0 +1,10 @@
+{
+  "name": "prefontaine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Run through the tape. A Claude Code plugin that keeps your agent going until the work is done.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

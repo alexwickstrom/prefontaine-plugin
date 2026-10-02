@@ -1,12 +1,16 @@
 {
   "name": "prefontaine",
-  "owner": { "name": "Alex Wickstrom" },
-  "metadata": { "description": "The prefontaine autonomy plugin." },
+  "owner": {
+    "name": "Alex Wickstrom"
+  },
+  "metadata": {
+    "description": "Run through the tape."
+  },
   "plugins": [
     {
       "name": "prefontaine",
       "source": "./",
-      "description": "Keep going without waiting to be told, with a Stop hook that refuses lazy stops."
+      "description": "Run through the tape. Your agent keeps going until the work is done and stops only at one-way doors."
     }
   ]
 }

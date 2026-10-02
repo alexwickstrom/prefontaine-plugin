@@ -3,10 +3,18 @@
   "name": "prefontaine",
   "displayName": "Prefontaine",
   "version": "0.1.0",
-  "description": "Keep going without waiting to be told: take the fork, log it, stop only at one-way doors. Ships a Stop hook (velcro) that refuses lazy stops, plus a setup quiz.",
-  "author": { "name": "Alex Wickstrom" },
+  "description": "Run through the tape. Your agent keeps going until the work is done, logs every fork it takes, and stops only at one-way doors. Ships a Stop hook (velcro) and a setup quiz.",
+  "author": {
+    "name": "Alex Wickstrom"
+  },
   "license": "MIT",
-  "keywords": ["autonomy", "loop", "agentic", "verification", "stop-hook"],
+  "keywords": [
+    "autonomy",
+    "loop",
+    "agentic",
+    "verification",
+    "stop-hook"
+  ],
   "userConfig": {
     "name": {
       "type": "string",
@@ -17,14 +25,24 @@
       "type": "string",
       "title": "Autonomy",
       "description": "How bold the agent is. from_config defers to ~/.claude/prefontaine/config.json (set by /prefontaine:setup).",
-      "options": ["from_config", "cautious", "balanced", "full_send"],
+      "options": [
+        "from_config",
+        "cautious",
+        "balanced",
+        "full_send"
+      ],
       "default": "from_config"
     },
     "when_idle": {
       "type": "string",
       "title": "When I finish early",
       "description": "stop, pull from a backlog file, or take one self-review pass. from_config defers to config.json.",
-      "options": ["from_config", "stop", "backlog", "self_review"],
+      "options": [
+        "from_config",
+        "stop",
+        "backlog",
+        "self_review"
+      ],
       "default": "from_config"
     },
     "backlog_file": {
