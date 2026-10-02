@@ -6,8 +6,8 @@
 
 > "To give anything less than your best is to sacrifice the gift." (Steve Prefontaine)
 
-[![CI](https://github.com/OWNER/prefontaine-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/prefontaine-plugin/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/OWNER/prefontaine-plugin?sort=semver)](https://github.com/OWNER/prefontaine-plugin/releases)
+[![CI](https://github.com/alexwickstrom/prefontaine-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/alexwickstrom/prefontaine-plugin/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/alexwickstrom/prefontaine-plugin?sort=semver)](https://github.com/alexwickstrom/prefontaine-plugin/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg)](https://code.claude.com/docs/en/plugins)
 
@@ -48,7 +48,7 @@ claude plugin marketplace add /path/to/prefontaine-plugin
 claude plugin install prefontaine@prefontaine
 ```
 
-Once the repo is on GitHub, the same works with `claude plugin marketplace add OWNER/prefontaine-plugin`. To try it for one session without installing: `claude --plugin-dir /path/to/prefontaine-plugin`.
+From GitHub: `claude plugin marketplace add alexwickstrom/prefontaine-plugin`. To try it for one session without installing: `claude --plugin-dir /path/to/prefontaine-plugin`.
 
 Requires `node` on PATH (the Stop hook runs on it). `gum` is optional, for the fancy terminal quiz.
 
