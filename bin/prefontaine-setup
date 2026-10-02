@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Literal "~" defaults are intentional (stored as typed, expanded by the config loader).
+# shellcheck disable=SC2088,SC2016
 # prefontaine-setup: a five-question palate quiz that writes ~/.claude/prefontaine/config.json.
 #
 #   prefontaine-setup              interactive (gum if installed, plain prompts otherwise)
@@ -6,8 +8,6 @@
 #   prefontaine-setup --dry-run    print the profile card, write nothing
 #   prefontaine-setup --no-gum     force the plain prompts
 set -euo pipefail
-# Literal "~" defaults are intentional (stored as typed, expanded by the config loader).
-# shellcheck disable=SC2088,SC2016
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE_JS="$ROOT/lib/profile.js"
