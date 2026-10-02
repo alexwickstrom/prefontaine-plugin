@@ -1,30 +1,31 @@
 ---
 name: setup
-description: 'Five-question palate quiz that writes your prefontaine profile (~/.claude/prefontaine/config.json). Use when the user runs /prefontaine:setup or asks to configure, set up, or change how bold prefontaine is.'
+description: 'Five-question setup quiz that writes your prefontaine profile (~/.claude/prefontaine/config.json). Use when the user runs /prefontaine:setup or asks to configure, set up, or change how bold prefontaine is.'
 disable-model-invocation: true
 allowed-tools: AskUserQuestion, Bash, Read
 ---
 
-# prefontaine setup: the palate quiz
+# prefontaine setup
 
-Walk the user through five playful questions, then write their profile and show the card.
-Keep your own text between questions to one short line. Tone: a wine-subscription palate
-quiz, warm and a little cheeky, never long.
+Five questions, one per independent axis of how the agent behaves: autonomy, hard stops,
+what to do when done early, where to log decisions, and a name. Each question is a concrete
+scenario, so the user answers with what they would want rather than a self-rating. Keep your
+own text between questions to one short line.
 
-## 0. Look at what is already poured
+## 0. Read the current profile
 
 Run `node "${CLAUDE_PLUGIN_ROOT}/lib/profile.js" card` and `git config user.name`. If a config
-already exists (`~/.claude/prefontaine/config.json`), say "Re-tasting your current profile" in
+already exists (`~/.claude/prefontaine/config.json`), say "Updating your current profile" in
 one line and mark its current values "(current)" in the option labels below.
 
 ## 1. Ask four questions in ONE AskUserQuestion call
 
-**Q1** header `Body`, question "How bold do you like your agent?", single select:
-- `Crisp Sauvignon Blanc`: cautious. Takes forks inside the task, asks before widening scope. Stop hook nudges lightly.
-- `Pinot Noir (Recommended)`: balanced. Picks a lane, logs why, stops only at one-way doors.
-- `Bold Cabernet`: full_send. Also pulls in adjacent work it finds. Stop hook pushes hardest.
+**Q1** header `Autonomy`, question "Mid-task, it hits a choice with a sensible default. It should...", single select:
+- `Ask me first`: cautious. Takes forks inside the task, asks before widening scope. Stop hook nudges lightly.
+- `Pick, log why, keep going (Recommended)`: balanced. Stops only at the actions in Q2.
+- `Pick, keep going, take adjacent work`: full_send. Also pulls in adjacent work it finds. Stop hook pushes hardest.
 
-**Q2** header `Doors`, question "Which doors always need a knock?", **multiSelect: true**:
+**Q2** header `Hard stops`, question "Which actions must always wait for your OK?", **multiSelect: true**:
 - `Pushes & merges`: a git push to a shared branch, or a merge
 - `External sends`: any external send: chat, email, ticketing, docs, any API that publishes
 - `Deletes & money`: deleting data you have not read; spending money
@@ -33,12 +34,12 @@ one line and mark its current values "(current)" in the option labels below.
 (AskUserQuestion allows 4 options; the user can add more through "Other". Split any "Other"
 text on commas or semicolons into extra entries.)
 
-**Q3** header `Idle`, question "When I finish early, I should...", single select:
-- `Swirl my own glass (Recommended)`: self_review. One pass over my own diff, then stop.
-- `Open the next bottle`: backlog. Pull the top `- [ ]` item from a backlog file.
-- `Cork it`: stop. Say "queue empty" and wait.
+**Q3** header `Done early`, question "It finishes before you are back. Best use of the time:", single select:
+- `Review its own diff (Recommended)`: self_review. One pass over its own diff, then stop.
+- `Start the next backlog item`: backlog. Pull the top `- [ ]` item from a backlog file.
+- `Stop and report`: stop. Say "queue empty" and wait.
 
-**Q4** header `Cellar`, question "Where should I cellar my notes?", single select:
+**Q4** header `Decision log`, question "Where should it log the choices it made?", single select:
 - `In the repo (Recommended)`: repo. `.prefontaine/forks.md`, git-excluded locally, never in the shared .gitignore.
 - `In my home dir`: home. `~/.claude/prefontaine/<project>/forks.md`.
 - Custom path via "Other": use the typed directory.
@@ -51,13 +52,13 @@ text on commas or semicolons into extra entries.)
 - Custom via "Other".
 
 If Q3 was backlog, add a sixth only-if-needed question in the same call: header `Backlog`,
-"Which bottle do I open next?", options `~/.claude/prefontaine/backlog.md (Recommended)` and
+"Which backlog file?", options `~/.claude/prefontaine/backlog.md (Recommended)` and
 `./BACKLOG.md in this repo`, plus "Other".
 
 ## 3. Map answers and write
 
 Map labels to values:
-- Q1: Crisp Sauvignon Blanc -> `cautious`, Pinot Noir -> `balanced`, Bold Cabernet -> `full_send`.
+- Q1: Ask me first -> `cautious`, Pick, log why -> `balanced`, Pick, keep going, take adjacent work -> `full_send`.
 - Q2: each selected option -> its full door text above (Deletes & money is two entries). If
   nothing was selected, omit `one_way_doors` (the defaults apply).
 - Q3: `self_review`, `backlog`, or `stop`.

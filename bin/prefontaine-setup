@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Literal "~" defaults are intentional (stored as typed, expanded by the config loader).
 # shellcheck disable=SC2088,SC2016
-# prefontaine-setup: a five-question palate quiz that writes ~/.claude/prefontaine/config.json.
+# prefontaine-setup: a five-question setup quiz that writes ~/.claude/prefontaine/config.json.
 #
 #   prefontaine-setup              interactive (gum if installed, plain prompts otherwise)
 #   prefontaine-setup --defaults   no questions, balanced defaults
@@ -44,8 +44,8 @@ fi
 # gum needs a terminal; without one, fall back rather than hang.
 if [[ $USE_GUM -eq 1 && ! -t 0 && $DEFAULTS -eq 0 ]]; then USE_GUM=0; fi
 
-PINK=212
-GOLD=220
+ACCENT="#E07A5F"
+GOLD="#F2CC8F"
 
 DOOR_PUSH="a git push to a shared branch, or a merge"
 DOOR_SEND="any external send: chat, email, ticketing, docs, any API that publishes"
@@ -55,14 +55,14 @@ DOOR_CREDS="changing a credential or permission"
 
 header() {
   if [[ $USE_GUM -eq 1 ]]; then
-    gum style --border double --border-foreground "$PINK" --padding "1 3" --margin "1 0" --align center \
-      "$(gum style --bold --foreground "$PINK" 'PREFONTAINE')" \
-      'The palate quiz for your agent' \
-      "$(gum style --faint 'Five questions. No wrong answers. Some bold ones.')"
+    gum style --border double --border-foreground "$ACCENT" --padding "1 3" --margin "1 0" --align center \
+      "$(gum style --bold --foreground "$ACCENT" 'PREFONTAINE')" \
+      'Set how your agent works when you are not watching' \
+      "$(gum style --faint 'Five questions. One per axis. About a minute.')"
   else
     echo "=============================================="
-    echo "  PREFONTAINE: the palate quiz for your agent"
-    echo "  Five questions. No wrong answers."
+    echo "  PREFONTAINE: set how your agent works when you are not watching"
+    echo "  Five questions. One per axis. About a minute."
     echo "=============================================="
     echo
   fi
@@ -115,11 +115,22 @@ plain_multi() {
   done
 }
 
+# gum clears its menu on exit; leave the answer on screen so the run reads as a transcript.
+show_answer() {
+  local line
+  while IFS= read -r line; do
+    gum style --foreground "$ACCENT" "  > $line" >&2
+  done <<<"$1"
+}
+
 choose() { # choose <default label> option...
   local def="$1"
   shift
   if [[ $USE_GUM -eq 1 ]]; then
-    gum choose --cursor.foreground "$PINK" --selected "$def" "$@"
+    local out
+    out="$(gum choose --cursor.foreground "$ACCENT" --selected "$def" "$@")" || return
+    show_answer "$out"
+    echo "$out"
   else
     local idx=1 i=1 opt
     for opt in "$@"; do
@@ -133,7 +144,10 @@ choose() { # choose <default label> option...
 choose_many() {
   if [[ $USE_GUM -eq 1 ]]; then
     # Labels contain commas, so preselect with "*" rather than a comma list.
-    gum choose --no-limit --cursor.foreground "$PINK" --selected '*' "$@"
+    local out
+    out="$(gum choose --no-limit --cursor.foreground "$ACCENT" --selected '*' "$@")" || return
+    show_answer "$out"
+    echo "$out"
   else
     plain_multi "$@"
   fi
@@ -141,7 +155,10 @@ choose_many() {
 
 input() { # input <placeholder> <default>
   if [[ $USE_GUM -eq 1 ]]; then
-    gum input --placeholder "$1" --value "$2"
+    local out
+    out="$(gum input --placeholder "$1" --value "$2")" || return
+    show_answer "$out"
+    echo "$out"
   else
     local reply
     read -r -p "  [$2]: " reply || reply=""
@@ -151,7 +168,7 @@ input() { # input <placeholder> <default>
 
 confirm() {
   if [[ $USE_GUM -eq 1 ]]; then
-    gum confirm --prompt.foreground "$PINK" "$1"
+    gum confirm --prompt.foreground "$ACCENT" "$1"
   else
     local reply
     read -r -p "$1 [Y/n]: " reply || reply=""
@@ -169,10 +186,10 @@ DOORS="$(printf '%s\n' "$DOOR_PUSH" "$DOOR_SEND" "$DOOR_DELETE" "$DOOR_MONEY" "$
 if [[ $DEFAULTS -eq 0 ]]; then
   header
 
-  ask_heading "1/5  How bold do you like your agent?"
-  B_WHITE="Crisp Sauvignon Blanc: asks before it wanders"
-  B_PINOT="Pinot Noir: picks a lane, logs why"
-  B_CAB="Bold Cabernet: does not wait to be poured"
+  ask_heading "1/5  Mid-task, it hits a choice with a sensible default. It should..."
+  B_WHITE="Ask me first"
+  B_PINOT="Pick one, write down why, keep going"
+  B_CAB="Pick one, keep going, and take on adjacent work it finds"
   case "$(choose "$B_PINOT" "$B_WHITE" "$B_PINOT" "$B_CAB")" in
     "$B_WHITE") AUTONOMY="cautious" ;;
     "$B_CAB") AUTONOMY="full_send" ;;
@@ -180,26 +197,26 @@ if [[ $DEFAULTS -eq 0 ]]; then
   esac
   echo
 
-  ask_heading "2/5  Which doors always need a knock?"
+  ask_heading "2/5  Which actions must always wait for your OK?"
   DOORS="$(choose_many "$DOOR_PUSH" "$DOOR_SEND" "$DOOR_DELETE" "$DOOR_MONEY" "$DOOR_CREDS")"
   echo
 
-  ask_heading "3/5  When I finish early, I should..."
-  I_SELF="Swirl my own glass: one self-review pass"
-  I_BACK="Open the next bottle: pull from a backlog"
-  I_STOP="Cork it: stop and wait"
+  ask_heading "3/5  It finishes before you are back. Best use of the time:"
+  I_SELF="Review its own diff once, then stop"
+  I_BACK="Start the next item on my backlog"
+  I_STOP="Stop and report"
   case "$(choose "$I_SELF" "$I_SELF" "$I_BACK" "$I_STOP")" in
     "$I_BACK") WHEN_IDLE="backlog" ;;
     "$I_STOP") WHEN_IDLE="stop" ;;
     *) WHEN_IDLE="self_review" ;;
   esac
   if [[ "$WHEN_IDLE" == "backlog" ]]; then
-    ask_heading "     Which bottle? (a Markdown checklist of '- [ ]' items)"
+    ask_heading "     Which backlog? (a Markdown checklist of '- [ ]' items)"
     BACKLOG="$(input "path to backlog file" "~/.claude/prefontaine/backlog.md")"
   fi
   echo
 
-  ask_heading "4/5  Where should I cellar my notes?"
+  ask_heading "4/5  Where should it log the choices it made?"
   N_REPO="In the repo: .prefontaine/forks.md (git-excluded)"
   N_HOME="In my home dir: ~/.claude/prefontaine/<project>/"
   N_CUSTOM="Somewhere else..."
@@ -232,14 +249,14 @@ WRITE_ARGS=(write)
 [[ $DRY_RUN -eq 1 ]] && WRITE_ARGS+=(--dry-run)
 
 if [[ $DRY_RUN -eq 0 && $DEFAULTS -eq 0 ]]; then
-  confirm "Bottle this profile?" || {
-    echo "Nothing written. Come back when you are thirsty."
+  confirm "Save this profile?" || {
+    echo "Nothing written."
     exit 0
   }
 fi
 
 if [[ $USE_GUM -eq 1 && -t 1 ]]; then
-  CARD="$(gum spin --spinner dot --title "Decanting your profile..." --show-output -- \
+  CARD="$(gum spin --spinner dot --title "Writing your profile..." --show-output -- \
     bash -c 'printf "%s" "$1" | node "$2" "${@:3}"' _ "$ANSWERS" "$PROFILE_JS" "${WRITE_ARGS[@]}")"
 else
   CARD="$(printf '%s' "$ANSWERS" | node "$PROFILE_JS" "${WRITE_ARGS[@]}")"

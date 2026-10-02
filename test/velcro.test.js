@@ -223,7 +223,7 @@ test('setup --defaults --dry-run prints a card and writes nothing', () => {
     encoding: 'utf8',
   })
   assert.strictEqual(r.status, 0, r.stderr)
-  assert.match(r.stdout, /PREFONTAINE PROFILE: PINOT NOIR/)
+  assert.match(r.stdout, /PREFONTAINE PROFILE: STEADY/)
   assert.ok(!fs.existsSync(path.join(home, '.claude', 'prefontaine', 'config.json')))
 })
 

@@ -17,27 +17,13 @@
 - **Bold, but with a backtrack stack.** Every fork it takes gets four written lines (what, why, the road not taken, how to prove it wrong), so a wrong call is cheap to undo.
 - **Stops where it should.** Pushes, merges, external sends, deletes, money, credentials: the doors you name always get a knock.
 
-## Your profile card
+## Setup takes a minute
 
-```
-PREFONTAINE PROFILE: PINOT NOIR
-"Smooth, confident, picks a lane and logs why."
+Five questions, one per independent axis: how much it decides on its own, which actions always wait for you, what it does when done early, where it logs its choices, and what to call you. Each question is a concrete scenario, not a self-rating, so the answers reflect what you actually want.
 
-Poured for:      the user
-Body:            balanced
-When idle:       Swirl and sniff its own work (self-review)
-Backlog:         off
-Cellar (notes):  .prefontaine/forks.md in the repo (git-excluded)
-Always knock at:
-  - a git push to a shared branch, or a merge
-  - any external send: chat, email, ticketing, docs, any API that publishes
-  - deleting data you have not read
-  - spending money
-  - changing a credential or permission
-Stop hook tiers: offer on (4), tasks on (12), backlog off, self-review on (1)
-```
+<img src="assets/setup-quiz.png" alt="prefontaine-setup asking the first question: mid-task, it hits a choice with a sensible default; options are ask me first, pick one and write down why, or pick one and take on adjacent work" width="720">
 
-*Maintainers: render `assets/setup.gif` with `vhs assets/setup.tape` ([VHS](https://github.com/charmbracelet/vhs)) and embed it here. Users can skip this.*
+<img src="assets/setup-card.png" alt="The resulting profile card: profile Steady, autonomy balanced, reviews its own diff once when done early, decision log in .prefontaine/forks.md, waits for your OK on pushes, external sends, deletes, money and credentials" width="720">
 
 ## Install
 
@@ -54,7 +40,7 @@ Requires `node` on PATH (the Stop hook runs on it). `gum` is optional, for the f
 
 ## Setup
 
-Pick a profile with a five-question palate quiz. Either:
+Run the quiz either way:
 
 - **In Claude Code:** `/prefontaine:setup` (multiple-choice cards).
 - **In your terminal:** `bin/prefontaine-setup` (gum TUI; plain prompts if gum is missing). Flags: `--defaults` (no questions), `--dry-run` (print the card, write nothing), `--no-gum` (plain prompts, no gum UI).
