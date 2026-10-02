@@ -37,7 +37,7 @@ Always knock at:
 Stop hook tiers: offer on (4), tasks on (12), backlog off, self-review on (1)
 ```
 
-A demo GIF of the quiz is scripted in [`assets/setup.tape`](assets/setup.tape). Render it with [VHS](https://github.com/charmbracelet/vhs): `brew install vhs && vhs assets/setup.tape`, then add `![setup demo](assets/setup.gif)` here.
+*Maintainers: render `assets/setup.gif` with `vhs assets/setup.tape` ([VHS](https://github.com/charmbracelet/vhs)) and embed it here. Users can skip this.*
 
 ## Install
 
@@ -57,9 +57,9 @@ Requires `node` on PATH (the Stop hook runs on it). `gum` is optional, for the f
 Pick a profile with a five-question palate quiz. Either:
 
 - **In Claude Code:** `/prefontaine:setup` (multiple-choice cards).
-- **In your terminal:** `bin/prefontaine-setup` (gum TUI; plain prompts if gum is missing). Flags: `--defaults` (no questions), `--dry-run` (print the card, write nothing), `--no-gum`.
+- **In your terminal:** `bin/prefontaine-setup` (gum TUI; plain prompts if gum is missing). Flags: `--defaults` (no questions), `--dry-run` (print the card, write nothing), `--no-gum` (plain prompts, no gum UI).
 
-Then start the loop in a session with `/prefontaine:prefontaine`. Say "stand down" to turn it off.
+Then start the loop in a session with `/prefontaine:prefontaine`. To turn the skill's behavior off, type "stand down" or "normal mode" to the agent in Claude Code. That does not turn off the Stop hook; use the off switch under [Safety first](#safety-first) for that.
 
 ## How it works
 
@@ -95,7 +95,7 @@ One file: `~/.claude/prefontaine/config.json`. Every key is optional; absent key
 | :- | :- | :- |
 | `name` | `"the user"` | What the agent calls you. |
 | `autonomy` | `"balanced"` | `cautious`, `balanced`, or `full_send`. Sets the tier budgets and how assertive the skill is. |
-| `one_way_doors` | the five above | List of strings. The only legitimate reasons to stop. |
+| `one_way_doors` | the five above | List of strings. The only legitimate reasons to stop. A git push or merge is always included, even if you leave it out. |
 | `when_idle` | `"self_review"` | `stop`, `backlog`, or `self_review`. What a finished working turn does. |
 | `backlog_file` | `null` (off) | Markdown checklist for the backlog tier. `~` is expanded. |
 | `notes_dir` | `"repo"` | `repo`: `.prefontaine/forks.md` at the repo root, added to `.git/info/exclude` (never the shared `.gitignore`), falling back to `~/.claude/prefontaine/<project>/forks.md` outside a repo. `home`: always the latter. Any other value: a directory. Notes are append-only. |

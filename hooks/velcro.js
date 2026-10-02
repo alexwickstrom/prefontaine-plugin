@@ -43,6 +43,7 @@
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
+const crypto = require('crypto')
 
 let config
 try {
@@ -79,9 +80,17 @@ function stateDir() {
   return process.env.CLAUDE_PLUGIN_DATA || path.join(config.homeDir(), 'state')
 }
 
-function counter(name, sessionId) {
-  const safe = String(sessionId || 'nosession').replace(/[^A-Za-z0-9_-]/g, '-')
-  const file = path.join(stateDir(), `${name}-${safe}`)
+/** Per-session counter key; without a session id, key on the transcript path, else null (do not count). */
+function sessionKey(input) {
+  if (input.session_id) return String(input.session_id).replace(/[^A-Za-z0-9_-]/g, '-')
+  if (input.transcript_path) {
+    return 't-' + crypto.createHash('sha256').update(String(input.transcript_path)).digest('hex').slice(0, 16)
+  }
+  return null
+}
+
+function counter(name, key) {
+  const file = path.join(stateDir(), `${name}-${key}`)
   let n = 0
   try {
     n = parseInt(fs.readFileSync(file, 'utf8'), 10) || 0
@@ -90,12 +99,14 @@ function counter(name, sessionId) {
   }
   return {
     count: n,
+    /** Returns false when the count cannot be persisted; callers must then allow the stop. */
     bump() {
       try {
         fs.mkdirSync(path.dirname(file), { recursive: true })
         fs.writeFileSync(file, String(n + 1))
+        return true
       } catch {
-        /* if the counter cannot be written, fail open rather than block forever */
+        return false
       }
     },
   }
@@ -123,7 +134,7 @@ function openTasks(sessionId) {
   )
   return all.filter((task) => {
     if (!task || (task.status !== 'pending' && task.status !== 'in_progress')) return false
-    const blockers = (task.blockedBy || []).map(String).filter((id) => unresolved.has(id))
+    const blockers = (Array.isArray(task.blockedBy) ? task.blockedBy : []).map(String).filter((id) => unresolved.has(id))
     return blockers.length === 0
   })
 }
@@ -216,6 +227,10 @@ function backlogItems(file) {
     .filter((s) => s.length > 0)
 }
 
+function allow() {
+  process.exit(0)
+}
+
 function block(reason) {
   process.stdout.write(JSON.stringify({ decision: 'block', reason, suppressOutput: true }))
   process.exit(0)
@@ -230,6 +245,8 @@ function main() {
   const { tiers, name } = cfg
   const doors = cfg.one_way_doors.join('; ')
   const sessionId = input.session_id
+  const key = sessionKey(input)
+  if (!key) allow() // nothing to count against, so never block
   const lines = transcriptLines(input.transcript_path || '')
   const didWork = turnDidWork(lines)
 
@@ -237,9 +254,9 @@ function main() {
   if (didWork && tiers.offer > 0) {
     const closing = closingText(lines)
     if (OFFER_TO_ACT.test(closing)) {
-      const c = counter('offer', sessionId)
+      const c = counter('offer', key)
       if (c.count < tiers.offer) {
-        c.bump()
+        if (!c.bump()) allow() // a budget that cannot be recorded never binds, so fail open
         const tail = closing.slice(-200).replace(/\s+/g, ' ')
         block(
           `This turn ends by offering to do the next thing rather than doing it:\n\n` +
@@ -259,9 +276,9 @@ function main() {
   if (tiers.tasks > 0) {
     const open = openTasks(sessionId)
     if (open.length > 0) {
-      const c = counter('tasks', sessionId)
+      const c = counter('tasks', key)
       if (c.count < tiers.tasks) {
-        c.bump()
+        if (!c.bump()) allow() // a budget that cannot be recorded never binds, so fail open
         const listed = open
           .slice(0, 6)
           .map((t) => `  #${t.id} [${t.status}] ${t.subject}`)
@@ -287,9 +304,9 @@ function main() {
   if (tiers.backlog > 0) {
     const items = backlogItems(cfg.backlog_file)
     if (items.length > 0) {
-      const c = counter('backlog', sessionId)
+      const c = counter('backlog', key)
       if (c.count < tiers.backlog) {
-        c.bump()
+        if (!c.bump()) allow() // a budget that cannot be recorded never binds, so fail open
         const pool = items.slice(0, BACKLOG_TOP_N)
         const pick = pool[Math.floor(Math.random() * pool.length)]
         const rest = items.slice(0, 5).filter((i) => i !== pick)
@@ -310,9 +327,9 @@ function main() {
 
   // Tier 3: one self-review pass per session.
   if (tiers.self_review > 0) {
-    const c = counter('selfreview', sessionId)
+    const c = counter('selfreview', key)
     if (c.count < 1) {
-      c.bump()
+      if (!c.bump()) allow()
       block(
         `This turn did work. Take one pass over your own changes before ending; ` +
           `not a general cleanup, only debt this turn created:\n\n` +
@@ -332,4 +349,8 @@ function main() {
   process.exit(0)
 }
 
-main()
+try {
+  main()
+} catch {
+  allow() // any unexpected error allows the stop: a broken hook must never wedge a session
+}

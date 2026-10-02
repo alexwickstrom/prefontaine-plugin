@@ -226,3 +226,62 @@ test('setup --defaults --dry-run prints a card and writes nothing', () => {
   assert.match(r.stdout, /PREFONTAINE PROFILE: PINOT NOIR/)
   assert.ok(!fs.existsSync(path.join(home, '.claude', 'prefontaine', 'config.json')))
 })
+
+// Regression tests for QA findings.
+
+test('non-array blockedBy does not crash the hook (exit 0)', () => {
+  const home = sandbox()
+  writeTask(home, 'q1', { id: 1, status: 'pending', subject: 'odd task', blockedBy: 'oops' })
+  writeTask(home, 'q1', { id: 2, status: 'pending', subject: 'odd task 2', blockedBy: { a: 1 } })
+  const out = run(home, { session_id: 'q1', transcript_path: '' })
+  assert.match(out.reason, /2 task\(s\) still open/)
+})
+
+test('unwritable state dir fails open: allows the stop instead of blocking forever', () => {
+  const home = sandbox()
+  const ro = path.join(home, 'readonly')
+  fs.mkdirSync(ro)
+  fs.chmodSync(ro, 0o500)
+  const t = writeTranscript(home, [human('go'), edit(), say('Done. Want me to ship it?')])
+  const env = { CLAUDE_PLUGIN_DATA: path.join(ro, 'data') }
+  try {
+    assert.strictEqual(run(home, { session_id: 'q2', transcript_path: t }, env), null)
+  } finally {
+    fs.chmodSync(ro, 0o700)
+  }
+})
+
+test('missing session_id keys budgets per transcript, and never blocks with neither', () => {
+  const home = sandbox()
+  writeConfig(home, { autonomy: 'cautious', when_idle: 'stop' })
+  const t1 = writeTranscript(home, [human('go'), edit(), say('Done. Should I continue?')])
+  assert.match(run(home, { transcript_path: t1 }).reason, /1\/2/)
+  assert.match(run(home, { transcript_path: t1 }).reason, /2\/2/)
+  assert.strictEqual(run(home, { transcript_path: t1 }), null)
+  const t2 = path.join(home, 'other.jsonl')
+  fs.copyFileSync(t1, t2)
+  assert.match(run(home, { transcript_path: t2 }).reason, /1\/2/, 'a new transcript gets a fresh budget')
+  assert.strictEqual(run(home, {}), null)
+})
+
+test('push/merge door is always present even if deselected', () => {
+  const home = sandbox()
+  writeConfig(home, { one_way_doors: ['spending money'] })
+  const t = writeTranscript(home, [human('go'), edit(), say('Done. Should I deploy?')])
+  const out = run(home, { session_id: 'q4', transcript_path: t })
+  assert.match(out.reason, /a git push to a shared branch, or a merge/)
+  assert.match(out.reason, /spending money/)
+})
+
+test('setup write is atomic and leaves no temp file', () => {
+  const home = sandbox()
+  const r = spawnSync('node', [path.join(__dirname, '..', 'lib', 'profile.js'), 'write'], {
+    input: JSON.stringify({ name: 'Sam', autonomy: 'cautious' }),
+    env: { ...process.env, HOME: home },
+    encoding: 'utf8',
+  })
+  assert.strictEqual(r.status, 0, r.stderr)
+  const dir = path.join(home, '.claude', 'prefontaine')
+  assert.deepStrictEqual(fs.readdirSync(dir).sort(), ['config.json'])
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dir, 'config.json'), 'utf8')).name, 'Sam')
+})
