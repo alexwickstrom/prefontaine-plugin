@@ -1,0 +1,12 @@
+{
+  "name": "prefontaine",
+  "owner": { "name": "Alex Wickstrom" },
+  "metadata": { "description": "The prefontaine autonomy plugin." },
+  "plugins": [
+    {
+      "name": "prefontaine",
+      "source": "./",
+      "description": "Keep going without waiting to be told, with a Stop hook that refuses lazy stops."
+    }
+  ]
+}
