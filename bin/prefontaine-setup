@@ -58,11 +58,11 @@ header() {
     gum style --border double --border-foreground "$ACCENT" --padding "1 3" --margin "1 0" --align center \
       "$(gum style --bold --foreground "$ACCENT" 'PREFONTAINE')" \
       'Set how your agent works when you are not watching' \
-      "$(gum style --faint 'Five questions. One per axis. About a minute.')"
+      "$(gum style --faint 'Five questions. One per axis. Bear with me for 1 minute...')"
   else
     echo "=============================================="
     echo "  PREFONTAINE: set how your agent works when you are not watching"
-    echo "  Five questions. One per axis. About a minute."
+    echo "  Five questions. One per axis. Bear with me for 1 minute..."
     echo "=============================================="
     echo
   fi
@@ -128,7 +128,8 @@ choose() { # choose <default label> option...
   shift
   if [[ $USE_GUM -eq 1 ]]; then
     local out
-    out="$(gum choose --cursor.foreground "$ACCENT" --selected "$def" "$@")" || return
+    # gum 2.x ignores --selected for single choice, so callers list the default first.
+    out="$(gum choose --cursor.foreground "$ACCENT" "$@")" || return
     show_answer "$out"
     echo "$out"
   else
@@ -188,9 +189,9 @@ if [[ $DEFAULTS -eq 0 ]]; then
 
   ask_heading "1/5  Mid-task, it hits a choice with a sensible default. It should..."
   B_WHITE="Ask me first"
-  B_PINOT="Pick one, write down why, keep going"
+  B_PINOT="Pick one, write down why, keep going (recommended)"
   B_CAB="Pick one, keep going, and take on adjacent work it finds"
-  case "$(choose "$B_PINOT" "$B_WHITE" "$B_PINOT" "$B_CAB")" in
+  case "$(choose "$B_PINOT" "$B_PINOT" "$B_WHITE" "$B_CAB")" in
     "$B_WHITE") AUTONOMY="cautious" ;;
     "$B_CAB") AUTONOMY="full_send" ;;
     *) AUTONOMY="balanced" ;;
@@ -202,7 +203,7 @@ if [[ $DEFAULTS -eq 0 ]]; then
   echo
 
   ask_heading "3/5  It finishes before you are back. Best use of the time:"
-  I_SELF="Review its own diff once, then stop"
+  I_SELF="Review its own diff once, then stop (recommended)"
   I_BACK="Start the next item on my backlog"
   I_STOP="Stop and report"
   case "$(choose "$I_SELF" "$I_SELF" "$I_BACK" "$I_STOP")" in
@@ -217,7 +218,7 @@ if [[ $DEFAULTS -eq 0 ]]; then
   echo
 
   ask_heading "4/5  Where should it log the choices it made?"
-  N_REPO="In the repo: .prefontaine/forks.md (git-excluded)"
+  N_REPO="In the repo: .prefontaine/forks.md, git-excluded (recommended)"
   N_HOME="In my home dir: ~/.claude/prefontaine/<project>/"
   N_CUSTOM="Somewhere else..."
   case "$(choose "$N_REPO" "$N_REPO" "$N_HOME" "$N_CUSTOM")" in

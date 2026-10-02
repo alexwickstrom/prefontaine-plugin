@@ -21,8 +21,8 @@ one line and mark its current values "(current)" in the option labels below.
 ## 1. Ask four questions in ONE AskUserQuestion call
 
 **Q1** header `Autonomy`, question "Mid-task, it hits a choice with a sensible default. It should...", single select:
-- `Ask me first`: cautious. Takes forks inside the task, asks before widening scope. Stop hook nudges lightly.
 - `Pick, log why, keep going (Recommended)`: balanced. Stops only at the actions in Q2.
+- `Ask me first`: cautious. Takes forks inside the task, asks before widening scope. Stop hook nudges lightly.
 - `Pick, keep going, take adjacent work`: full_send. Also pulls in adjacent work it finds. Stop hook pushes hardest.
 
 **Q2** header `Hard stops`, question "Which actions must always wait for your OK?", **multiSelect: true**:

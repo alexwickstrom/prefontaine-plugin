@@ -24,7 +24,10 @@ Show
 Type "bin/prefontaine-setup --dry-run"
 Sleep 400ms
 Enter
+# gum waits on terminal queries under the recorder; skip that dead air.
+Hide
 Sleep 4s
+Show
 
 # 1/5 Autonomy: keep the default.
 Sleep 1.2s
