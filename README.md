@@ -59,9 +59,14 @@ Pick a profile with a five-question palate quiz. Either:
 - **In Claude Code:** `/prefontaine:setup` (multiple-choice cards).
 - **In your terminal:** `bin/prefontaine-setup` (gum TUI; plain prompts if gum is missing). Flags: `--defaults` (no questions), `--dry-run` (print the card, write nothing), `--no-gum` (plain prompts, no gum UI).
 
-Then start the loop in a session with `/prefontaine:prefontaine`. To turn the skill's behavior off, type "stand down" or "normal mode" to the agent in Claude Code. That does not turn off the Stop hook; use the off switch under [Safety first](#safety-first) for that.
+Then start the loop in a session with `/prefontaine:prefontaine`. To turn the skill's behavior off, type "stand down" or "normal mode" to the agent in Claude Code. That does not turn off the Stop hook; use the off switch under [How it works](#how-it-works) (Safety first) for that.
 
 ## How it works
+
+<details>
+<summary>The Stop hook, safety rules, and config reference (click to expand)</summary>
+
+### The helper at the door
 
 Think of a helper at the door who checks the chore list before letting you leave. When the agent tries to end its turn, the Stop hook (`velcro`) looks at what actually happened:
 
@@ -72,7 +77,7 @@ Think of a helper at the door who checks the chore list before letting you leave
 
 A purely conversational turn is always allowed to end in a question. The skill supplies the rules (the fork log, claim stamps, when to fan out to subagents); the hook supplies the nudge.
 
-## Safety first
+### Safety first
 
 - **Never on its own:** pushes, merges, external sends, deletes, spending, or credential changes are one-way doors. The agent stops and names the door in one line.
 - **Budgets:** every tier has a per-session block budget (see the table below). When it runs out, the hook lets the stop through.
@@ -87,7 +92,7 @@ A purely conversational turn is always allowed to end in a question. The skill s
 >
 > **Already have a personal prefontaine or velcro Stop hook in `~/.claude/settings.json`?** Remove that `Stop` entry before installing, or both hooks will fire on every stop.
 
-## Config reference
+### Config reference
 
 One file: `~/.claude/prefontaine/config.json`. Every key is optional; absent keys use the defaults. The hook reads it on every run; the skill reads it when invoked. Print the effective config with `node lib/config.js`.
 
@@ -112,7 +117,7 @@ Budgets per autonomy preset:
 
 `when_idle: "stop"` turns off backlog and self-review; `"self_review"` turns off backlog; backlog is also off whenever `backlog_file` is unset.
 
-### Plugin options and precedence
+#### Plugin options and precedence
 
 `name`, `autonomy`, `when_idle`, and `backlog_file` are also plugin options, so `claude plugin configure prefontaine@prefontaine` and `/config` work. Precedence, highest first:
 
@@ -122,6 +127,8 @@ Budgets per autonomy preset:
 4. Built-in defaults
 
 Hook block counters live in the plugin data directory (`${CLAUDE_PLUGIN_DATA}`), or `~/.claude/prefontaine/state/` when run outside the plugin.
+
+</details>
 
 ## Development
 
