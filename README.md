@@ -27,16 +27,17 @@ Four questions, one per independent axis: how much it decides on its own, which 
 
 ## Install
 
-From a clone (or any local path):
+Pick one. No clone needed.
 
-```bash
-claude plugin marketplace add /path/to/prefontaine-plugin
-claude plugin install prefontaine@prefontaine
-```
+- **In your terminal:**
+  ```bash
+  claude plugin marketplace add alexwickstrom/prefontaine-plugin
+  claude plugin install prefontaine@prefontaine
+  ```
+- **Inside Claude Code:** type `/plugin marketplace add alexwickstrom/prefontaine-plugin`, then `/plugin install prefontaine@prefontaine`.
+- **Or just ask Claude:** "Install the prefontaine plugin from alexwickstrom/prefontaine-plugin."
 
-From GitHub: `claude plugin marketplace add alexwickstrom/prefontaine-plugin`. To try it for one session without installing: `claude --plugin-dir /path/to/prefontaine-plugin`.
-
-Requires `node` on PATH (the Stop hook runs on it). `gum` is optional, for the fancy terminal quiz.
+Then restart Claude Code. If the installer says "userConfig options not yet set", ignore it: every option is optional, and the setup quiz below covers them. Requires `node` on PATH (the Stop hook runs on it). `gum` is optional, for the fancy terminal quiz.
 
 ## Setup
 
@@ -117,6 +118,8 @@ Hook block counters live in the plugin data directory (`${CLAUDE_PLUGIN_DATA}`),
 </details>
 
 ## Development
+
+Working from a clone: `claude --plugin-dir .` loads it for one session without installing; `claude plugin marketplace add .` installs from your checkout.
 
 ```bash
 npm test                                         # node --test, no dependencies
