@@ -1,4 +1,4 @@
-// Tests for the velcro Stop hook. No dependencies: `node --test test/`.
+// Tests for the velcro Stop hook. No dependencies: `npm test`.
 const { test } = require('node:test')
 const assert = require('node:assert')
 const fs = require('fs')
