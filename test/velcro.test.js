@@ -285,3 +285,18 @@ test('setup write is atomic and leaves no temp file', () => {
   assert.deepStrictEqual(fs.readdirSync(dir).sort(), ['config.json'])
   assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dir, 'config.json'), 'utf8')).name, 'Sam')
 })
+
+test('re-running setup keeps a hand-set name', () => {
+  const home = sandbox()
+  writeConfig(home, { name: 'Sam', autonomy: 'balanced' })
+  const r = spawnSync('node', [path.join(__dirname, '..', 'lib', 'profile.js'), 'write'], {
+    input: JSON.stringify({ autonomy: 'full_send' }),
+    env: { ...process.env, HOME: home },
+    encoding: 'utf8',
+  })
+  assert.strictEqual(r.status, 0, r.stderr)
+  const saved = JSON.parse(fs.readFileSync(path.join(home, '.claude', 'prefontaine', 'config.json'), 'utf8'))
+  assert.strictEqual(saved.name, 'Sam')
+  assert.strictEqual(saved.autonomy, 'full_send')
+  assert.doesNotMatch(r.stdout, /Name:/)
+})

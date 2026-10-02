@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Literal "~" defaults are intentional (stored as typed, expanded by the config loader).
 # shellcheck disable=SC2088,SC2016
-# prefontaine-setup: a five-question setup quiz that writes ~/.claude/prefontaine/config.json.
+# prefontaine-setup: a four-question setup quiz that writes ~/.claude/prefontaine/config.json.
 #
 #   prefontaine-setup              interactive (gum if installed, plain prompts otherwise)
 #   prefontaine-setup --defaults   no questions, balanced defaults
@@ -58,11 +58,11 @@ header() {
     gum style --border double --border-foreground "$ACCENT" --padding "1 3" --margin "1 0" --align center \
       "$(gum style --bold --foreground "$ACCENT" 'PREFONTAINE')" \
       'Set how your agent works when you are not watching' \
-      "$(gum style --faint 'Five questions. One per axis. Bear with me for 1 minute...')"
+      "$(gum style --faint 'Four questions. One per axis. Bear with me for 1 minute...')"
   else
     echo "=============================================="
     echo "  PREFONTAINE: set how your agent works when you are not watching"
-    echo "  Five questions. One per axis. Bear with me for 1 minute..."
+    echo "  Four questions. One per axis. Bear with me for 1 minute..."
     echo "=============================================="
     echo
   fi
@@ -180,14 +180,13 @@ confirm() {
 AUTONOMY="balanced"
 WHEN_IDLE="self_review"
 NOTES_DIR="repo"
-NAME=""
 BACKLOG=""
 DOORS="$(printf '%s\n' "$DOOR_PUSH" "$DOOR_SEND" "$DOOR_DELETE" "$DOOR_MONEY" "$DOOR_CREDS")"
 
 if [[ $DEFAULTS -eq 0 ]]; then
   header
 
-  ask_heading "1/5  Mid-task, it hits a choice with a sensible default. It should..."
+  ask_heading "1/4  Mid-task, it hits a choice with a sensible default. It should..."
   B_WHITE="Ask me first"
   B_PINOT="Pick one, write down why, keep going (recommended)"
   B_CAB="Pick one, keep going, and take on adjacent work it finds"
@@ -198,11 +197,11 @@ if [[ $DEFAULTS -eq 0 ]]; then
   esac
   echo
 
-  ask_heading "2/5  Which actions must always wait for your OK?"
+  ask_heading "2/4  Which actions must always wait for your OK?"
   DOORS="$(choose_many "$DOOR_PUSH" "$DOOR_SEND" "$DOOR_DELETE" "$DOOR_MONEY" "$DOOR_CREDS")"
   echo
 
-  ask_heading "3/5  It finishes before you are back. Best use of the time:"
+  ask_heading "3/4  It finishes before you are back. Best use of the time:"
   I_SELF="Review its own diff once, then stop (recommended)"
   I_BACK="Start the next item on my backlog"
   I_STOP="Stop and report"
@@ -217,7 +216,7 @@ if [[ $DEFAULTS -eq 0 ]]; then
   fi
   echo
 
-  ask_heading "4/5  Where should it log the choices it made?"
+  ask_heading "4/4  Where should it log the choices it made?"
   N_REPO="In the repo: .prefontaine/forks.md, git-excluded (recommended)"
   N_HOME="In my home dir: ~/.claude/prefontaine/<project>/"
   N_CUSTOM="Somewhere else..."
@@ -227,19 +226,15 @@ if [[ $DEFAULTS -eq 0 ]]; then
     *) NOTES_DIR="repo" ;;
   esac
   echo
-
-  ask_heading "5/5  What should I call you?"
-  NAME="$(input "your name" "$(git config user.name 2>/dev/null || echo 'the user')")"
-  echo
 fi
 
 ANSWERS="$(
-  P_NAME="$NAME" P_AUTONOMY="$AUTONOMY" P_IDLE="$WHEN_IDLE" P_NOTES="$NOTES_DIR" \
+  P_AUTONOMY="$AUTONOMY" P_IDLE="$WHEN_IDLE" P_NOTES="$NOTES_DIR" \
     P_BACKLOG="$BACKLOG" P_DOORS="$DOORS" P_DEFAULTS="$DEFAULTS" node -e '
     const e = process.env
     if (e.P_DEFAULTS === "1") { process.stdout.write("{}"); process.exit(0) }
     const doors = (e.P_DOORS || "").split("\n").map((s) => s.trim()).filter(Boolean)
-    const a = { name: e.P_NAME, autonomy: e.P_AUTONOMY, when_idle: e.P_IDLE, notes_dir: e.P_NOTES }
+    const a = { autonomy: e.P_AUTONOMY, when_idle: e.P_IDLE, notes_dir: e.P_NOTES }
     if (doors.length) a.one_way_doors = doors
     if (e.P_BACKLOG) a.backlog_file = e.P_BACKLOG
     process.stdout.write(JSON.stringify(a))

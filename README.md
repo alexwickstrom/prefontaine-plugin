@@ -19,9 +19,9 @@
 
 ## Setup takes a minute
 
-Five questions, one per independent axis: how much it decides on its own, which actions always wait for you, what it does when done early, where it logs its choices, and what to call you. Each question is a concrete scenario, not a self-rating, so the answers reflect what you actually want.
+Four questions, one per independent axis: how much it decides on its own, which actions always wait for you, what it does when done early, and where it logs its choices. Each question is a concrete scenario, not a self-rating, so the answers reflect what you actually want.
 
-<img src="assets/setup-quiz.png" alt="prefontaine-setup asking the first question: mid-task, it hits a choice with a sensible default; options are ask me first, pick one and write down why, or pick one and take on adjacent work" width="720">
+<img src="assets/setup-quiz.png" alt="prefontaine-setup asking the first of four questions: mid-task, it hits a choice with a sensible default; options are ask me first, pick one and write down why, or pick one and take on adjacent work" width="720">
 
 <img src="assets/setup-card.png" alt="The resulting profile card: profile Steady, autonomy balanced, reviews its own diff once when done early, decision log in .prefontaine/forks.md, waits for your OK on pushes, external sends, deletes, money and credentials" width="720">
 

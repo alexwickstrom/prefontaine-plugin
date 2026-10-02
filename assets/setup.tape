@@ -29,30 +29,24 @@ Hide
 Sleep 4s
 Show
 
-# 1/5 Autonomy: keep the default.
+# 1/4 Autonomy: keep the default.
 Sleep 1.2s
 Screenshot assets/setup-quiz.png
 Enter
 Sleep 2s
 
-# 2/5 Doors: keep all five.
+# 2/4 Doors: keep all five.
 Sleep 1s
 Enter
 Sleep 2s
 
-# 3/5 Done early: review its own diff.
+# 3/4 Done early: review its own diff.
 Enter
 Sleep 2s
 
-# 4/5 Decision log: in the repo.
+# 4/4 Decision log: in the repo.
 Enter
 Sleep 2s
-
-# 5/5 Name.
-Ctrl+U
-Type "Sam"
-Sleep 500ms
-Enter
 
 Sleep 3s
 # gum's late terminal-query replies land on the prompt; clear them off-camera.

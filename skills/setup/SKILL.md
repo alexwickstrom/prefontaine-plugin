@@ -1,14 +1,15 @@
 ---
 name: setup
-description: 'Five-question setup quiz that writes your prefontaine profile (~/.claude/prefontaine/config.json). Use when the user runs /prefontaine:setup or asks to configure, set up, or change how bold prefontaine is.'
+description: 'Four-question setup quiz that writes your prefontaine profile (~/.claude/prefontaine/config.json). Use when the user runs /prefontaine:setup or asks to configure, set up, or change how bold prefontaine is.'
 disable-model-invocation: true
 allowed-tools: AskUserQuestion, Bash, Read
 ---
 
 # prefontaine setup
 
-Five questions, one per independent axis of how the agent behaves: autonomy, hard stops,
-what to do when done early, where to log decisions, and a name. Each question is a concrete
+Four questions, one per independent axis of how the agent behaves: autonomy, hard stops,
+what to do when done early, and where to log decisions. Do not ask for a name; you already
+know what to call the user. Each question is a concrete
 scenario, so the user answers with what they would want rather than a self-rating. Keep your
 own text between questions to one short line.
 
@@ -44,14 +45,9 @@ text on commas or semicolons into extra entries.)
 - `In my home dir`: home. `~/.claude/prefontaine/<project>/forks.md`.
 - Custom path via "Other": use the typed directory.
 
-## 2. Ask the fifth question
+## 2. Follow up only if needed
 
-**Q5** header `Name`, question "What should I call you?", single select:
-- `<git user.name>` (only if `git config user.name` returned something)
-- `Just "the user"`
-- Custom via "Other".
-
-If Q3 was backlog, add a sixth only-if-needed question in the same call: header `Backlog`,
+If Q3 was backlog, ask one more question: header `Backlog`,
 "Which backlog file?", options `~/.claude/prefontaine/backlog.md (Recommended)` and
 `./BACKLOG.md in this repo`, plus "Other".
 
@@ -63,7 +59,6 @@ Map labels to values:
   nothing was selected, omit `one_way_doors` (the defaults apply).
 - Q3: `self_review`, `backlog`, or `stop`.
 - Q4: `repo`, `home`, or the custom path.
-- Q5: the chosen name, or omit it for "the user".
 
 Then pipe the answers as JSON to the writer (it validates, backs up any existing config to
 `config.json.bak`, writes, and prints the card):
